@@ -235,8 +235,8 @@ export default function App() {
               <FileJson size={18} className="text-zinc-300" />
             </div>
             <div>
-              <h1 className="text-sm font-bold tracking-tight text-zinc-300 uppercase">JSON.EXTRACTOR</h1>
-              <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-widest">v1.0.0 // LOW_CONTRAST_MODE</p>
+              <h1 className="text-sm font-bold tracking-tight text-zinc-300 uppercase">Json.Parser</h1>
+              <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-widest">v1.0.0</p>
             </div>
           </div>
           
