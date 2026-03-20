@@ -1,0 +1,5 @@
+{
+  "name": "JSON Extractor & Parser",
+  "description": "A high-performance tool to extract and parse JSON objects from any text string.",
+  "requestFramePermissions": []
+}
