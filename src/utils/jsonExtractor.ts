@@ -48,37 +48,53 @@ export function extractJson(input: string): ExtractedJson[] {
       if (char === '{' || char === '[') {
         stack.push({ char, index: i });
       } else if (char === '}' || char === ']') {
-        // Find the matching opener
-        for (let j = stack.length - 1; j >= 0; j--) {
+        let matched = false;
+
+        // Pass 1: strict parsing (JSON.parse + collapsed whitespace) on all openers
+        for (let j = stack.length - 1; j >= 0 && !matched; j--) {
           const opener = stack[j];
           if ((opener.char === '{' && char === '}') || (opener.char === '[' && char === ']')) {
             const potentialJson = input.substring(opener.index, i + 1);
-            
+
             try {
-              // Try standard JSON first
               const parsed = JSON.parse(potentialJson);
-              results.push({
-                raw: potentialJson,
-                parsed,
-                startIndex: opener.index,
-                endIndex: i + 1,
-                isValid: true
-              });
-              break; 
+              results.push({ raw: potentialJson, parsed, startIndex: opener.index, endIndex: i + 1, isValid: true });
+              matched = true;
             } catch (e) {
+              try {
+                const collapsed = potentialJson.replace(/\s{2,}/g, '');
+                const parsed = JSON.parse(collapsed);
+                results.push({ raw: potentialJson, parsed, startIndex: opener.index, endIndex: i + 1, isValid: true });
+                matched = true;
+              } catch (e2) {
+                // strict parsing failed, will try jsonrepair in pass 2
+              }
+            }
+          }
+        }
+
+        // Pass 2: jsonrepair fallback (only if strict parsing failed for all openers)
+        if (!matched) {
+          for (let j = stack.length - 1; j >= 0; j--) {
+            const opener = stack[j];
+            if ((opener.char === '{' && char === '}') || (opener.char === '[' && char === ']')) {
+              const potentialJson = input.substring(opener.index, i + 1);
+
               try {
                 const repaired = jsonrepair(potentialJson);
                 const parsed = JSON.parse(repaired);
-                results.push({
-                  raw: potentialJson,
-                  parsed,
-                  startIndex: opener.index,
-                  endIndex: i + 1,
-                  isValid: true
-                });
+                results.push({ raw: potentialJson, parsed, startIndex: opener.index, endIndex: i + 1, isValid: true });
                 break;
-              } catch (e2) {
-                // Not valid yet
+              } catch (e) {
+                try {
+                  const collapsed = potentialJson.replace(/\s{2,}/g, '');
+                  const repaired = jsonrepair(collapsed);
+                  const parsed = JSON.parse(repaired);
+                  results.push({ raw: potentialJson, parsed, startIndex: opener.index, endIndex: i + 1, isValid: true });
+                  break;
+                } catch (e2) {
+                  // Not valid yet
+                }
               }
             }
           }
